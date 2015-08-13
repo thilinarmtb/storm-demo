@@ -29,18 +29,26 @@ import backtype.storm.utils.Utils;
 
 public class Demo2 {
     public static void main(String[] args) throws Exception {
+        // We create a topology with a single Spout and two Bolts.
+        // `FixedWords` spout emits four words. "Bolt1" which is an instance of `SingleNonAckingBolt`
+        // acks three of the words leaving out one. "Bolt2" which is an instance of "AllAckingBolt"
+        // acks all the words it recieves.
         TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("words", new FixedWords());
         builder.setBolt("Bolt1", new SingleNonAckingBolt("Bolt1"), 1).shuffleGrouping("words");
         builder.setBolt("Bolt2", new AllAckingBolt("Bolt2"), 1).shuffleGrouping("words");
 
+        // `conf` stores the configuration information that needs to be supplied with
+        // the strom topology.
         Config conf = new Config();
         conf.setDebug(false);
 
         if (args != null && args.length > 0) {
+            // Submit the topology to the cluster.
             conf.setNumWorkers(3);
             StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
         } else {
+            // Run locally if no input arguments are present.
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("test", conf, builder.createTopology());
             Utils.sleep(10000);

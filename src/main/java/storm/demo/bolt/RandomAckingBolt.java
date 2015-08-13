@@ -30,33 +30,39 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
-public class ProbabilisticallyAckingBolt implements IRichBolt {
+// This Bolt acks the received messages randomly i.e., when a message arrives, the bolt generates
+// a random number between 0 and 1 and ack the message only if the random number is greater than the
+// `_threshold`. Please have a look at IRichBolt interface to know more about the overridden methods.
+// IRichBolt: https://storm.apache.org/apidocs/backtype/storm/topology/IRichBolt.html
+public class RandomAckingBolt implements IRichBolt {
     private OutputCollector _collector;
     private String _name;
-    private double _probabilityThreshold;
-    private double eps = 0.000001;
-    private static transient Logger log = Logger.getLogger(ProbabilisticallyAckingBolt.class);
+    private double _threshold;
+    private static transient Logger log = Logger.getLogger(RandomAckingBolt.class);
 
-    public ProbabilisticallyAckingBolt(String name, double probabilityThreshold) {
+    public RandomAckingBolt(String name, double probabilityThreshold) {
         _name = name;
-        _probabilityThreshold = probabilityThreshold;
+        _threshold = probabilityThreshold;
     }
 
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         _collector = collector;
     }
 
+    // This method processes the tuples received.
     public void execute(Tuple input) {
         String word = input.getString(0);
-        _collector.emit(input, new Values("ProbabilisticallyAckingBolt " + word + " !!"));
+        _collector.emit(input, new Values(word));
         log.info(_name + " Received word: " + word);
 
-        if (Math.random() > _probabilityThreshold) {
+        // Ack only if the random number is greater than the _threshold
+        if (Math.random() > _threshold) {
             _collector.ack(input);
             log.info(_name + " Acked word: " + word);
         }
     }
 
+    // Declare (a) name(s) for the field(s) emitted by the Bolt.
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("wordStream"));
     }
