@@ -30,6 +30,9 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+// Acks all the words received by the Bolt. Please have a look at IRichBolt interface to know more
+// about the overridden methods.
+// IRichBolt: https://storm.apache.org/apidocs/backtype/storm/topology/IRichBolt.html
 public class AllAckingBolt implements IRichBolt {
     private OutputCollector _collector;
     private String _name;
@@ -43,6 +46,7 @@ public class AllAckingBolt implements IRichBolt {
         _collector = collector;
     }
 
+    // This method processes the tuples received.
     public void execute(Tuple input) {
         String word = input.getString(0);
         _collector.emit(input, new Values(word));
@@ -50,6 +54,7 @@ public class AllAckingBolt implements IRichBolt {
         _collector.ack(input);
     }
 
+    // Declare (a) name(s) for the field(s) emitted by the Bolt.
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("wordStream"));
     }
@@ -61,4 +66,3 @@ public class AllAckingBolt implements IRichBolt {
         return null;
     }
 }
-
