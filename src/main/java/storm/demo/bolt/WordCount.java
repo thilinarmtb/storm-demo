@@ -30,8 +30,13 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 
+// Counts the words received by the Bolt. We keep an in memory hash map to
+// store the counts. Please have a look at IRichBolt interface to know
+// more about the overridden methods.
+// IRichBolt: https://storm.apache.org/apidocs/backtype/storm/topology/IRichBolt.html
 public class WordCount implements IRichBolt {
     private OutputCollector _collector;
+    // This hash map holds the count keyed by the word.
     private Map<String, Integer> counts = new HashMap<String, Integer>();
     private static transient Logger log = Logger.getLogger(WordCount.class);
 
@@ -39,24 +44,28 @@ public class WordCount implements IRichBolt {
         _collector = collector;
     }
 
+    // This method processes the tuples received.
     public void execute(Tuple input) {
         String word = input.getString(0);
         Integer count = counts.get(word);
         if (count == null) {
+            // We haven't seen the word before
             count = 0;
         }
+        // Increment the count and put it back
         count ++;
         counts.put(word, count);
         log.info(" Received word: " + word + ", Count: " + count);
+        // Acknowledge that the tuple was processed successfully.
         _collector.ack(input);
     }
 
+    // Declare (a) name(s) for the field(s) emitted by the Bolt.
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("wordStream"));
     }
 
-    public void cleanup() {
-    }
+    public void cleanup() {}
 
     public Map getComponentConfiguration() {
         return null;

@@ -45,7 +45,7 @@ topology (in an anchored topology).
 
 We play `n` number of messages (not necessarily distinct) from a single spout to
 two bolts(`Bolt1` and `Bolt2`)  directly connected to the spout. One bolt acks
-messages probabilistically (i.e., it sometimes acks the messages and sometimes
+messages randomly (i.e., it sometimes acks the messages and sometimes
 doesn’t). We count the messages received by each bolt.
 
 **Observation**:
