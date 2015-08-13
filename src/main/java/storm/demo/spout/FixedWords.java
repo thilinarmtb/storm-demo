@@ -30,11 +30,19 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
+// `FixedWords` Spout emits the set of words {apple, ball, cat, dog} once.
+// Please refer the apidocs for IComponent and ISpout to know more about
+// the overridden methods.
+// ISpout: https://storm.apache.org/apidocs/backtype/storm/spout/ISpout.html
+// IComponent: https://storm.apache.org/apidocs/backtype/storm/topology/IComponent.html
 public class FixedWords extends BaseRichSpout {
     private SpoutOutputCollector _collector;
 
     private static transient Logger log = Logger.getLogger(FixedWords.class);
+
+    // Counter to keep track of the tuples emitted.
     private int count = 0;
+    // Set of words, one of these will be emitted when `nextTuple` is called.
     private String[] words = new String[]{"apple", "ball", "cat", "dog"};
 
     @Override
@@ -42,21 +50,28 @@ public class FixedWords extends BaseRichSpout {
         _collector = collector;
     }
 
+    // This function emits the tuple.
     @Override
     public void nextTuple() {
         Utils.sleep(10000);
         if (count < words.length) {
             String word = words[count];
+            // We emit the word with the id `current`.
             _collector.emit(new Values(word), count);
             log.info("Emitted word: " + word);
             count++;
         }
     }
 
+    // This method is called when a message is successfully process. If we were using something like a
+    // queue of messages, we might remove it from the queue to avoid repeating the same thing again and
+    // again. But in our case, we don't want to do anything.
     @Override
     public void ack(Object id) {
     }
 
+    // This function will be called when a tuple fails and `msgId` contains
+    // the fail message id.
     @Override
     public void fail(Object id) {
         String word = words[(Integer) id];
@@ -64,6 +79,7 @@ public class FixedWords extends BaseRichSpout {
         _collector.emit(new Values(word), id);
     }
 
+    // Declare (a) name(s) for the field(s) emitted by the Spout.
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("word"));
